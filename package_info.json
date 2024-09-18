@@ -1,0 +1,7 @@
+{
+    "name":"pyOLCB",
+    "version":"0.1.0",
+    "author":"ngpaladi",
+    "url":"https://github.com/ngpaladi/pyOLCB",
+    "dependencies": "python-can"
+}
