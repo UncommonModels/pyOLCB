@@ -18,7 +18,7 @@ setuptools.setup(
     url=package_info["url"],
     packages=setuptools.find_packages(),
     install_requires=package_info["dependencies"],
-    python_requires='>3.10.0',
+    python_requires='>3.10.8',
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Apache Software License",
