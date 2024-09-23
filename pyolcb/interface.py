@@ -8,7 +8,7 @@ class Interface:
     network = []
     def __init__(self, connection: can.interface.Bus | socket.socket) -> None:
         self.is_can_interface = False
-        if isinstance(connection, can.interface.Bus):
+        if isinstance(connection, can.BusABC):
             self.connection = connection
             self.is_can_interface = True
         else:

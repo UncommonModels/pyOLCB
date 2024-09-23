@@ -6,28 +6,32 @@ class MessageTypeIndicator:
         self.value = mti
 
     def get_mti(self):
-        return self.value.to_bytes(2, 'big')
+        return self.value
 
     def __eq__(self, x: object) -> bool:
         return (self.value == x.value)
 
-    def get_can_header(self, source: Address, destination: Address = None, frame_id: int = None) -> bytes:
+    def get_can_header(self, source: Address, destination: Address = None, frame_id: int = None) -> int:
         temp_bytes = ((0x0FFF & self.value) << 12) | source.get_alias()
         if self.value & (0b1 << 12):
-            if destination != None:
+            if not destination is None:
                 temp_bytes = temp_bytes | destination.get_alias() << 12
                 if frame_id is None:
-                    return int(temp_bytes | 0x1A000000).to_bytes(4, 'big')
+                    return int(temp_bytes | 0x1A000000)
                 elif frame_id == 1:
-                    return int(temp_bytes | 0x1B000000).to_bytes(4, 'big')
+                    return int(temp_bytes | 0x1B000000)
                 elif frame_id == -1:
-                    return int(temp_bytes | 0x1D000000).to_bytes(4, 'big')
+                    return int(temp_bytes | 0x1D000000)
                 else:
-                    return int(temp_bytes | 0x1C000000).to_bytes(4, 'big')
+                    return int(temp_bytes | 0x1C000000)
             else:
                 raise Exception("Destination address not provided")
         else:
-            return int(temp_bytes | 0x19000000).to_bytes(4, 'big')
+            return int(temp_bytes | 0x19000000)
+    
+    def get_can_header_bytes(self, source: Address, destination: Address = None, frame_id: int = None) -> bytes:
+        return self.get_can_header(source, destination, frame_id).to_bytes(4, 'big')
+
 
     @classmethod
     def from_can_header(cls, can_header: int):
@@ -45,7 +49,7 @@ class MTI(MessageTypeIndicator):
 
 
 Initialization_Complete = MTI(0x0100)
-Initialization_Complete = MTI(0x0101)
+Initialization_Complete_Simple = MTI(0x0101)
 Verify_Node_ID_Number_Addressed = MTI(0x0488)
 Verify_Node_ID_Number_Global = MTI(0x0490)
 Verified_Node_ID_Number = MTI(0x0170)

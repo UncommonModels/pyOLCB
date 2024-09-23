@@ -5,11 +5,10 @@ class Address:
     full = None
     alias = None
 
-    def __init__(self, address: utilities.byte_options = None, alias: utilities.byte_options = None) -> None:
-        if not address is None:
-            self.full = utilities.process_bytes(6, address)
+    def __init__(self, address: utilities.byte_options, alias: utilities.byte_options = None) -> None:
+        self.full = utilities.process_bytes(6, address)
         if not alias is None:
-            self.alias = utilities.process_bytes(3, alias)
+            self.alias = utilities.process_bytes(1.5, alias)
 
     def __str__(self):
         return ".".join(format(x, '02x') for x in self.full)
@@ -36,33 +35,29 @@ class Address:
         else:
             return True
 
-    def has_address(self) -> bool:
-        if self.full is None:
-            return False
-        else:
-            return True
-
-    def get_alias(self) -> bytes:
-        if self.has_alias():
-            return self.alias
-        else:
-            raise Exception("No alias has been set for this address")
-
-    def get_alias_int(self) -> int:
+    def get_alias(self) -> int:
         if self.has_alias():
             return int.from_bytes(self.alias, 'big')
         else:
             raise Exception("No alias has been set for this address")
 
-    def set_alias(self, alias: utilities.byte_options) -> bytes:
-        self.alias = utilities.process_bytes(3, alias)
-        return self.alias
-
-    def get_full_address(self) -> bytes:
-        if self.has_address():
-            return self.full
+    def get_alias_bytes(self) -> bytes:
+        if self.has_alias():
+            return self.alias
         else:
-            raise Exception("No full address has been set for this address")
+            raise Exception("No alias has been set for this address")
+
+    def set_alias(self, alias: utilities.byte_options) -> bytes:
+        self.alias = utilities.process_bytes(1.5, alias)
+        return self.alias
+    
+    def get_full_address(self) -> int:
+        return int.from_bytes(self.full, 'big')
+
+
+    def get_full_address_bytes(self) -> bytes:
+        return self.full
+
 
     def set_full_address(self, address: utilities.byte_options) -> bytes:
         self.full = utilities.process_bytes(3, address)
