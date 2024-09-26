@@ -2,6 +2,6 @@
     "name":"pyOLCB",
     "version":"0.1.0",
     "author":"ngpaladi",
-    "url":"https://github.com/ngpaladi/pyOLCB",
+    "url":"https://github.com/UncommonModels/pyOLCB",
     "dependencies": "python-can"
 }

@@ -11,7 +11,7 @@ setuptools.setup(
     name=package_info["name"],
     version=package_info["version"],
     author=package_info["author"],
-    author_email="%s@noahpaladino.com" % package_info["name"],
+    author_email="%s@uncommonmodels.com" % package_info["name"],
     description="An easy to use Python implementation of OpenLCB (LCC) protocols, designed to interface with both CAN and TCP/IP",
     long_description=long_description,
     long_description_content_type="text/markdown",
