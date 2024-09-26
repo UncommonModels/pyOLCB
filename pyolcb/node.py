@@ -1,3 +1,11 @@
+"""
+==============
+node
+==============
+
+"""
+
+
 from .address import Address
 from .interface import Interface
 from .message import Message
@@ -7,6 +15,19 @@ from . import utilities, message_types, protocols
 
 
 class Node:
+    """
+    The :class:`Node` is the building block of an OpenLCB/LCC network. Each :class:`Node` can communicate
+    with any other :class:`Node` on the network by sending events or datagrams over the common bus. Each 
+    :class:`Node` object can be attached to an :class:`Interface` (or multiple) to allow for complex network 
+    architectures. Each :class:`Message` should originate from one :class:`Node` .
+
+    Parameters
+    ----------
+    address : Address
+        The address (full and alias) to be associated with the :class:`Node`.
+    interfaces : int, Interface | list[Interface]
+        An :class:`Interface` or list therof to connect the :class:`Node` to.
+    """
     address = None
     supported_protocols = protocols.Protocol()
     interfaces = []
@@ -14,30 +35,33 @@ class Node:
     datagram_handler = None
     simple = False
 
-    def add_interfaces(self, interfaces: Interface | list[Interface]):
-        if isinstance(interfaces, Interface):
-            self.interfaces.append(interfaces)
-            self.interfaces[-1].register_connected_device(self.address)
-            return self.interfaces
-        elif isinstance(interfaces, list) and all(isinstance(x, Interface) for x in interfaces):
-            self.interfaces += interfaces
-            for i in self.interfaces[-len(interfaces):]:
-                i.register_connected_device(self.address)
-            return self.interfaces
-        else:
-            raise Exception("Not an Interface or list thereof")
-
-    def add_interface(self, interface: Interface):
-        return self.add_interfaces(interface)
-
     def __init__(self, address: Address, interfaces: Interface | list[Interface]):
+        """
+        Initialize the :class:`Node` object.
+
+        Parameters
+        ----------
+        address : Address
+            The address (full and alias) to be associated with the :class:`Node`.
+        interfaces : int, Interface | list[Interface]
+            An :class:`Interface` or list therof to attach the :class:`Node` to.
+        """
         self.address = address
         if not self.address.has_alias():
             if self.address.alias is None:
                 self.address.set_alias(
                     self.address.get_full_address() & 0xFFF)  # temporary
 
-        self.add_interfaces(interfaces)
+        if isinstance(interfaces, Interface):
+            self.interfaces.append(interfaces)
+            self.interfaces[-1].register_connected_device(self.address)
+        elif isinstance(interfaces, list) and all(isinstance(x, Interface) for x in interfaces):
+            self.interfaces += interfaces
+            for i in self.interfaces[-len(interfaces):]:
+                i.register_connected_device(self.address)
+        else:
+            raise Exception("No Interfaces to attach to")
+
         if not self.simple:
             self.send(Message(message_types.Initialization_Complete,
                       bytes(self.address), self.address))
@@ -45,11 +69,19 @@ class Node:
             self.send(Message(message_types.Initialization_Complete_Simple, bytes(
                 self.address), self.address))
 
-    def get_alias(self):
+    def get_alias(self) -> int:
+        """
+        Get the :class:`Node`'s alias.
+
+        Returns
+        -------
+        Alias
+            Returns the :class:`Node`'s alias as an `int`.
+        """
         if self.address.alias is None:
             raise Exception("Alias not set!")
         else:
-            return self.address.alias
+            return self.address.get_alias()
 
     def set_alias(self, alias: utilities.byte_options):
         return self.address.set_alias(alias)
@@ -71,8 +103,24 @@ class Node:
             raise Exception("No interfaces to send message on")
 
     def produce(self, event: int | Event):
+        """
+        Produce an :class:`Event` and send the resulting message. By default, 
+        if an `int` is provided for the `event` parameter, and the (unsigned) value fits within two bytes,
+        the event will be tagged with the address of the :class:`Node`. This behavior can be overridden by 
+        passing an :class:`Event` object with no source address.
+
+        Parameters
+        ----------
+        event : int | Event
+            The event to produce
+        """
         if isinstance(event, int):
-            return self.send(Event(event, self.address))
+            if event < 0:
+                raise Exception("Invalid Event")
+            elif event > 2**16:
+                return self.send(Event(event))
+            else:
+                return self.send(Event(event, self.address))
         elif isinstance(event, Event):
             return self.send(event)
         else:
