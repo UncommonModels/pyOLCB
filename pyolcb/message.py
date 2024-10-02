@@ -30,7 +30,7 @@ class Message:
 
     @classmethod
     def from_can_message(cls, message:can.Message):
-        if message.is_extended_id():
+        if message.is_extended_id:
             mti = MessageTypeIndicator.from_can_header(message.arbitration_id)
             if is_known_mti(mti):
                 return cls(mti,message.data, Address(alias=message.arbitration_id & 0xFFF))

@@ -5,8 +5,9 @@ class Address:
     full = None
     alias = None
 
-    def __init__(self, address: utilities.byte_options, alias: utilities.byte_options = None) -> None:
-        self.full = utilities.process_bytes(6, address)
+    def __init__(self, address: utilities.byte_options = None, alias: utilities.byte_options = None) -> None:
+        if not address is None:
+            self.full = utilities.process_bytes(6, address)
         if not alias is None:
             self.alias = utilities.process_bytes(1.5, alias)
 

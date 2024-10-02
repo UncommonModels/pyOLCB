@@ -14,3 +14,7 @@ class Event(Message):
         elif not source is None:
             self.id = ((source.get_full_address() << 16 )+int.from_bytes(self.id[-2:],'big')).to_bytes(8,'big')
         super().__init__(message_types.Producer_Consumer_Event_Report, self.id, source)
+
+    def __eq__(self, x: object):
+        return self.id == x.id
+

@@ -11,7 +11,8 @@ from .interface import Interface
 from .message import Message
 from .event import Event
 from .datagram import Datagram
-from . import utilities, message_types, protocols
+from . import utilities, message_types, protocols, exceptions
+import can
 
 
 class Node:
@@ -29,7 +30,8 @@ class Node:
     supported_protocols = protocols.Protocol()
     interfaces = []
     consumers = {}
-    datagram_handler = None
+    datagram_handler = lambda *args: None
+    unknown_message_processor = lambda *args: None
     simple = False
 
     def __init__(self, address: Address, interfaces: Interface | list[Interface]):
@@ -51,11 +53,8 @@ class Node:
 
         if isinstance(interfaces, Interface):
             self.interfaces.append(interfaces)
-            self.interfaces[-1].register_connected_device(self.address)
         elif isinstance(interfaces, list) and all(isinstance(x, Interface) for x in interfaces):
             self.interfaces += interfaces
-            for i in self.interfaces[-len(interfaces):]:
-                i.register_connected_device(self.address)
         else:
             raise Exception("No Interfaces to attach to")
 
@@ -65,6 +64,11 @@ class Node:
         else:
             self.send(Message(message_types.Initialization_Complete_Simple, bytes(
                 self.address), self.address))
+        
+        for interface in self.interfaces:
+            interface.register_connected_device(self.address)
+            interface.register_listener(self.process_message)
+
 
     def get_alias(self) -> int:
         """
@@ -145,8 +149,8 @@ class Node:
                 event = Event(event)
             else:
                 event = Event(event, self.address)
-        if not event in self.consumers:
-            self.consumers[event] = function
+        if not event.id in self.consumers:
+            self.consumers[event.id] = function
             return self.consumers
         else:
             raise Exception("Consumer already registered")
@@ -170,8 +174,8 @@ class Node:
                 event = Event(event)
             else:
                 event = Event(event, self.address)
-        if event in self.consumers:
-            del self.consumers[event]
+        if event.id in self.consumers:
+            del self.consumers[event.id]
         return self.consumers
 
     def replace_consumer(self, event: Event | int, function: callable):
@@ -198,7 +202,7 @@ class Node:
         self.remove_consumer(event)
         return self.add_consumer(event, function)
 
-    def run_consumer(self, event: Event | int):
+    def consume(self, event: Event | int):
         """
         Run the consumer for a specific :class:`Event`.
 
@@ -222,8 +226,8 @@ class Node:
                 event = Event(event)
             else:
                 event = Event(event, self.address)
-        if event in self.consumers:
-            return self.consumers[event]()
+        if event.id in self.consumers:
+            return self.consumers[event.id]()
         else:
             raise Exception("Consumer not registered")
 
@@ -251,8 +255,8 @@ class Node:
                 event = Event(event)
             else:
                 event = Event(event, self.address)
-        if event in self.consumers:
-            return self.consumers[event]
+        if event.id in self.consumers:
+            return self.consumers[event.id]
         else:
             raise Exception("Consumer not registered")
 
@@ -292,6 +296,34 @@ class Node:
 
     def protocol_support_reply(self, interface: Interface = None):
         pass
+
+    def set_unknown_message_processor(self, function: callable):
+        self.unknown_message_processor = function
+        return self.unknown_message_processor
+        
+
+    def process_message(self, message):
+        if isinstance(message, can.Message):
+            message = Message.from_can_message(message)
+        else:
+            raise NotImplementedError()
+        
+        match message.message_type:
+            case message_types.Verify_Node_ID_Number_Addressed:
+                if message.data == self.address.get_alias_bytes():
+                    self.verified_node_id()
+                    return
+            case message_types.Verify_Node_ID_Number_Global:
+                self.verified_node_id()
+                return
+            case message_types.Producer_Consumer_Event_Report:
+                event = Event(message.data)
+                if event.id in self.consumers:
+                    self.consumers[event.id](message)
+            case _:
+                self.unknown_message_processor(message)
+        
+
 
     # def set_datagram_handler(self, datagram_handler: callable[Datagram]):
 
