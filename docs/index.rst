@@ -4,6 +4,7 @@
     :hidden:
     
     Home <self>
+    examples
 
 .. toctree::
     :hidden:
