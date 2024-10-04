@@ -130,7 +130,7 @@ class Node:
 
     def add_consumer(self, event: Event | int, function: callable):
         """
-        Register a callable function to be run on receipt of a specific :class:`Event`.
+        Register a function to be run on receipt of a specific :class:`Event`.
 
         Parameters
         ----------
@@ -157,7 +157,7 @@ class Node:
 
     def remove_consumer(self, event: Event | int):
         """
-        Deregister the callable function to be run on receipt of a specific :class:`Event`.
+        Deregister the function to be run on receipt of a specific :class:`Event`.
 
         Parameters
         ----------
@@ -180,7 +180,7 @@ class Node:
 
     def replace_consumer(self, event: Event | int, function: callable):
         """
-        Replace a callable function that is run on receipt of a specific :class:`Event`.
+        Replace a function that is run on receipt of a specific :class:`Event`.
 
         Parameters
         ----------
@@ -279,9 +279,6 @@ class Node:
             return self.send(Message(message_types.Verify_Node_ID_Number_Global, bytes(self.address), self.address))
 
     def verified_node_id(self):
-        """
-        Respond to a request to verify aliases on an OpenLCB/LCC network.
-        """
         return self.send(Message(message_types.Verified_Node_ID_Number, bytes(self.address), self.address))
 
     def add_supported_protocol(self, protocol: protocols.Protocol):
@@ -297,7 +294,27 @@ class Node:
     def protocol_support_reply(self, interface: Interface = None):
         pass
 
+    def set_datagram_handler(self, datagram_handler: callable):
+        """
+        Register a function to be run on receipt of a :class:`Datagram`.
+
+        Parameters
+        ----------
+        datagram_handler : callable
+            The function to be called upon receipt of a :class:`Datagram` packet. Must take a :class:`Message` as the first parameter.
+        """
+        self.datagram_handler = datagram_handler
+        return self.datagram_handler
+
     def set_unknown_message_processor(self, function: callable):
+        """
+        Register a function to be run on receipt of a message of unknown type.
+
+        Parameters
+        ----------
+        function : callable
+            The function to be called upon receipt of an unknown message. Must take a :class:`Message` as the first parameter.
+        """
         self.unknown_message_processor = function
         return self.unknown_message_processor
         
@@ -325,7 +342,7 @@ class Node:
         
 
 
-    # def set_datagram_handler(self, datagram_handler: callable[Datagram]):
+    
 
 
 class SimpleNode(Node):
