@@ -16,14 +16,15 @@ class MessageTypeIndicator:
         if self.value & (0b1 << 12):
             if not destination is None:
                 temp_bytes = temp_bytes | destination.get_alias() << 12
-                if frame_id is None:
-                    return int(temp_bytes | 0x1A000000)
-                elif frame_id == 1:
-                    return int(temp_bytes | 0x1B000000)
-                elif frame_id == -1:
-                    return int(temp_bytes | 0x1D000000)
-                else:
-                    return int(temp_bytes | 0x1C000000)
+                match frame_id:
+                    case None:
+                        return int(temp_bytes | 0x1A000000)
+                    case 1:
+                        return int(temp_bytes | 0x1B000000)
+                    case -1:
+                        return int(temp_bytes | 0x1D000000)
+                    case _:
+                        return int(temp_bytes | 0x1C000000)
             else:
                 raise Exception("Destination address not provided")
         else:

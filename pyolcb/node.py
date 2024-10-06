@@ -33,6 +33,7 @@ class Node:
     datagram_handler = lambda *args: None
     unknown_message_processor = lambda *args: None
     simple = False
+    _datagram_queue = {}
 
     def __init__(self, address: Address, interfaces: Interface | list[Interface]):
         """
@@ -64,11 +65,10 @@ class Node:
         else:
             self.send(Message(message_types.Initialization_Complete_Simple, bytes(
                 self.address), self.address))
-        
+
         for interface in self.interfaces:
             interface.register_connected_device(self.address)
             interface.register_listener(self.process_message)
-
 
     def get_alias(self) -> int:
         """
@@ -301,7 +301,7 @@ class Node:
         Parameters
         ----------
         datagram_handler : callable
-            The function to be called upon receipt of a :class:`Datagram` packet. Must take a :class:`Message` as the first parameter.
+            The function to be called upon receipt of a :class:`Datagram` packet. Must take a :class:`Datagram` as the first parameter.
         """
         self.datagram_handler = datagram_handler
         return self.datagram_handler
@@ -317,32 +317,45 @@ class Node:
         """
         self.unknown_message_processor = function
         return self.unknown_message_processor
-        
 
     def process_message(self, message):
         if isinstance(message, can.Message):
-            message = Message.from_can_message(message)
+            converted_message = Message.from_can_message(message)
         else:
             raise NotImplementedError()
-        
-        match message.message_type:
+
+        match converted_message.message_type:
             case message_types.Verify_Node_ID_Number_Addressed:
-                if message.data == self.address.get_alias_bytes():
+                if converted_message.data == self.address.get_alias_bytes():
                     self.verified_node_id()
                     return
             case message_types.Verify_Node_ID_Number_Global:
                 self.verified_node_id()
                 return
             case message_types.Producer_Consumer_Event_Report:
-                event = Event(message.data)
+                event = Event(converted_message.data)
                 if event.id in self.consumers:
-                    self.consumers[event.id](message)
+                    self.consumers[event.id](converted_message)
+            case message_types.Datagram:
+                if converted_message.destination == self.address:
+                    match converted_message.frame_id:
+                        case None:
+                            Datagram.from_message_list(converted_message)
+                        case 1:
+                            self._datagram_queue[converted_message.source.alias] = []
+                            self._datagram_queue[converted_message.source.alias].append(
+                                converted_message)
+                        case -1:
+                            self._datagram_queue[converted_message.source.alias].append(
+                                converted_message)
+                            self.datagram_handler(Datagram.from_message_list(
+                                self._datagram_queue[converted_message.source.alias]))
+                            self._datagram_queue[converted_message.source.alias] = []
+                        case _:
+                            self._datagram_queue[converted_message.source.alias].append(
+                                converted_message)
             case _:
-                self.unknown_message_processor(message)
-        
-
-
-    
+                self.unknown_message_processor(converted_message)
 
 
 class SimpleNode(Node):

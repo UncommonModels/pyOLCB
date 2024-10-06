@@ -22,3 +22,13 @@ class Datagram(Message):
             messages.append(Message(message_types.Datagram, self.data[(
                 num_frames-1)*8:], self.source, self.destination, frame_id))
             return messages
+        
+
+    @classmethod
+    def from_message_list(cls, message_list: list[Message]):
+        data_bytearray = bytearray()
+        for message in message_list:
+            data_bytearray.append(message.data)
+        cls(data_bytearray, message_list[0].source, message_list[0].destination)
+
+

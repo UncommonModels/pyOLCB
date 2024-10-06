@@ -32,8 +32,19 @@ class Message:
     def from_can_message(cls, message:can.Message):
         if message.is_extended_id:
             mti = MessageTypeIndicator.from_can_header(message.arbitration_id)
+            frame_id = None
+            destination = None
+            match (message.arbitration_id >> 24):
+                case 0x1A:
+                    frame_id = None
+                case 0x1B:
+                    frame_id = 1
+                case 0x1D:
+                    frame_id = -1
+                case 0x1C:
+                    frame_id = 2
             if is_known_mti(mti):
-                return cls(mti,message.data, Address(alias=message.arbitration_id & 0xFFF))
+                return cls(mti,message.data, Address(alias=message.arbitration_id & 0xFFF), destination, frame_id)
             else:
                 return None
         else:
