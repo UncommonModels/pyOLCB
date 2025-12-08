@@ -1,6 +1,5 @@
 import socket
 import threading
-import time
 import pyolcb
 
 TEST_ADDRESS = '05.01.01.01.8C.00'
