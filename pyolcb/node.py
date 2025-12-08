@@ -321,8 +321,14 @@ class Node:
     def process_message(self, message):
         if isinstance(message, can.Message):
             converted_message = Message.from_can_message(message)
+        elif isinstance(message, Message):
+            # Message already converted (e.g., from TCP)
+            converted_message = message
         else:
-            raise NotImplementedError()
+            raise NotImplementedError("Unsupported message type")
+
+        if converted_message is None:
+            return
 
         match converted_message.message_type:
             case message_types.Verify_Node_ID_Number_Addressed:

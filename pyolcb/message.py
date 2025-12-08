@@ -1,5 +1,6 @@
 from .address import Address
 from .message_types import MessageTypeIndicator, is_known_mti
+from . import utilities
 import can
 
 class Message:
@@ -49,4 +50,60 @@ class Message:
                 return None
         else:
             return None
+    
+    def to_gridconnect(self) -> str:
+        """
+        Convert this Message to GridConnect ASCII format.
         
+        Returns
+        -------
+        str
+            GridConnect formatted string
+        """
+        if self.source is None:
+            raise Exception("No source node set")
+        
+        arbitration_id = self.get_can_header()
+        data = self.data if self.data is not None else bytes()
+        return utilities.to_gridconnect(arbitration_id, data, is_extended=True)
+    
+    @classmethod
+    def from_gridconnect(cls, frame: str):
+        """
+        Create a Message from a GridConnect ASCII format string.
+        
+        Parameters
+        ----------
+        frame : str
+            GridConnect formatted string
+        
+        Returns
+        -------
+        Message | None
+            A Message object or None if parsing fails
+        """
+        parsed = utilities.from_gridconnect(frame)
+        if parsed is None:
+            return None
+        
+        arbitration_id, data, is_extended = parsed
+        
+        if is_extended:
+            mti = MessageTypeIndicator.from_can_header(arbitration_id)
+            frame_id = None
+            destination = None
+            match (arbitration_id >> 24):
+                case 0x1A:
+                    frame_id = None
+                case 0x1B:
+                    frame_id = 1
+                case 0x1D:
+                    frame_id = -1
+                case 0x1C:
+                    frame_id = 2
+            if is_known_mti(mti):
+                return cls(mti, data, Address(alias=arbitration_id & 0xFFF), destination, frame_id)
+            else:
+                return None
+        else:
+            return None
