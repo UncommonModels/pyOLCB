@@ -95,7 +95,7 @@ def from_gridconnect(frame: str) -> tuple[int, bytes, bool] | None:
         return None
 
     try:
-        data = bytes(int(data_str[i:i+2], 16) for i in range(0, len(data_str), 2))
+        data = bytes([int(data_str[i:i+2], 16) for i in range(0, len(data_str), 2)])
     except ValueError:
         return None
 

@@ -127,9 +127,11 @@ def test_tcp_send_receive():
     Test sending and receiving messages over TCP.
     """
     received_messages = []
+    message_received = threading.Event()
 
     def message_handler(message):
         received_messages.append(message)
+        message_received.set()
 
     # Create server socket
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -173,7 +175,7 @@ def test_tcp_send_receive():
     client_interface.send(message)
 
     # Wait for message to be received
-    time.sleep(0.5)
+    assert message_received.wait(timeout=2.0), "Message not received within timeout"
 
     # Verify message was received
     assert len(received_messages) > 0, "No messages received"
@@ -192,9 +194,11 @@ def test_tcp_node_initialization():
     Test Node initialization with TCP interface.
     """
     received_messages = []
+    message_received = threading.Event()
 
     def message_handler(message):
         received_messages.append(message)
+        message_received.set()
 
     # Create server socket
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -228,7 +232,7 @@ def test_tcp_node_initialization():
     pyolcb.Node(address, client_interface)
 
     # Wait for initialization message
-    time.sleep(0.5)
+    assert message_received.wait(timeout=2.0), "Initialization message not received within timeout"
 
     # Verify initialization message was sent
     assert len(received_messages) > 0, "No initialization message received"

@@ -70,7 +70,7 @@ class Interface:
                     break
 
                 # Add to buffer and decode
-                self._tcp_buffer += data.decode('ascii', errors='ignore')
+                self._tcp_buffer += data.decode('ascii', errors='replace')
 
                 # Process complete frames (ending with ';')
                 while ';' in self._tcp_buffer:
@@ -85,8 +85,11 @@ class Interface:
 
             except socket.timeout:
                 continue
+            except (ConnectionError, OSError):
+                # Connection errors - stop listening
+                break
             except Exception:
-                # Handle errors but keep listening
+                # Other errors - keep listening but continue
                 continue
 
     def stop_listener(self):
