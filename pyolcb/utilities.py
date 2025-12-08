@@ -25,7 +25,7 @@ byte_options = str | list[int] | int | bytes | bytearray
 def to_gridconnect(arbitration_id: int, data: bytes, is_extended: bool = True) -> str:
     """
     Convert a CAN message to GridConnect ASCII format.
-    
+
     Parameters
     ----------
     arbitration_id : int
@@ -34,7 +34,7 @@ def to_gridconnect(arbitration_id: int, data: bytes, is_extended: bool = True) -
         The message data payload
     is_extended : bool
         Whether this is an extended CAN frame (default: True)
-    
+
     Returns
     -------
     str
@@ -50,53 +50,53 @@ def to_gridconnect(arbitration_id: int, data: bytes, is_extended: bool = True) -
 def from_gridconnect(frame: str) -> tuple[int, bytes, bool] | None:
     """
     Parse a GridConnect ASCII format frame into CAN message components.
-    
+
     Parameters
     ----------
     frame : str
         GridConnect formatted string
-    
+
     Returns
     -------
     tuple[int, bytes, bool] | None
         A tuple of (arbitration_id, data, is_extended) or None if parsing fails
     """
     frame = frame.strip()
-    
+
     # Check basic frame structure
     if not frame.startswith(':') or not frame.endswith(';'):
         return None
-    
+
     # Remove delimiters
     frame = frame[1:-1]
-    
+
     # Check frame type
     if not frame or frame[0] not in ['X', 'S']:
         return None
-    
+
     is_extended = (frame[0] == 'X')
     frame = frame[1:]
-    
+
     # Find the 'N' separator
     n_pos = frame.find('N')
     if n_pos == -1:
         return None
-    
+
     # Parse arbitration ID
     id_str = frame[:n_pos]
     try:
         arbitration_id = int(id_str, 16)
     except ValueError:
         return None
-    
+
     # Parse data bytes
     data_str = frame[n_pos+1:]
     if len(data_str) % 2 != 0:
         return None
-    
+
     try:
         data = bytes(int(data_str[i:i+2], 16) for i in range(0, len(data_str), 2))
     except ValueError:
         return None
-    
+
     return (arbitration_id, data, is_extended)
