@@ -36,23 +36,41 @@ class Message:
     def from_can_message(cls, message: can.Message):
         if message.is_extended_id:
             mti = MessageTypeIndicator.from_can_header(message.arbitration_id)
-            frame_id = None
-            destination = None
-            match (message.arbitration_id >> 24):
-                case 0x1A:
-                    frame_id = None
-                case 0x1B:
-                    frame_id = 1
-                case 0x1D:
-                    frame_id = -1
-                case 0x1C:
-                    frame_id = 2
+            frame_id, destination = cls._parse_frame_info(message.arbitration_id)
             if is_known_mti(mti):
                 return cls(mti, message.data, Address(alias=message.arbitration_id & 0xFFF), destination, frame_id)
             else:
                 return None
         else:
             return None
+
+    @staticmethod
+    def _parse_frame_info(arbitration_id: int) -> tuple[int | None, None]:
+        """
+        Parse frame ID from CAN arbitration ID.
+
+        Parameters
+        ----------
+        arbitration_id : int
+            The CAN arbitration ID
+
+        Returns
+        -------
+        tuple[int | None, None]
+            A tuple of (frame_id, destination)
+        """
+        frame_id = None
+        destination = None
+        match (arbitration_id >> 24):
+            case 0x1A:
+                frame_id = None
+            case 0x1B:
+                frame_id = 1
+            case 0x1D:
+                frame_id = -1
+            case 0x1C:
+                frame_id = 2
+        return frame_id, destination
 
     def to_gridconnect(self) -> str:
         """
@@ -93,17 +111,7 @@ class Message:
 
         if is_extended:
             mti = MessageTypeIndicator.from_can_header(arbitration_id)
-            frame_id = None
-            destination = None
-            match (arbitration_id >> 24):
-                case 0x1A:
-                    frame_id = None
-                case 0x1B:
-                    frame_id = 1
-                case 0x1D:
-                    frame_id = -1
-                case 0x1C:
-                    frame_id = 2
+            frame_id, destination = cls._parse_frame_info(arbitration_id)
             if is_known_mti(mti):
                 return cls(mti, data, Address(alias=arbitration_id & 0xFFF), destination, frame_id)
             else:

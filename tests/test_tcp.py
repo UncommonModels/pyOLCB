@@ -142,19 +142,19 @@ def test_tcp_send_receive():
     # Server thread to accept connection
     client_sock = None
 
-    def server_thread():
+    def accept_connection():
         nonlocal client_sock
         client_sock, _ = server_socket.accept()
 
-    server_t = threading.Thread(target=server_thread)
-    server_t.start()
+    server_thread = threading.Thread(target=accept_connection)
+    server_thread.start()
 
     # Create client socket and connect
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect(('127.0.0.1', TEST_PORT))
 
     # Wait for server to accept
-    server_t.join(timeout=2)
+    server_thread.join(timeout=2)
 
     # Create interfaces
     client_interface = pyolcb.Interface(client_socket)
@@ -209,18 +209,18 @@ def test_tcp_node_initialization():
     # Server thread
     client_sock = None
 
-    def server_thread():
+    def accept_connection():
         nonlocal client_sock
         client_sock, _ = server_socket.accept()
 
-    server_t = threading.Thread(target=server_thread)
-    server_t.start()
+    server_thread = threading.Thread(target=accept_connection)
+    server_thread.start()
 
     # Create client socket
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect(('127.0.0.1', TEST_PORT + 1))
 
-    server_t.join(timeout=2)
+    server_thread.join(timeout=2)
 
     # Create server interface with listener
     server_interface = pyolcb.Interface(client_sock)
