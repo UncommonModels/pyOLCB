@@ -61,6 +61,6 @@ class Address:
 
 
     def set_full_address(self, address: utilities.byte_options) -> bytes:
-        self.full = utilities.process_bytes(3, address)
+        self.full = utilities.process_bytes(6, address)
         return self.full
 

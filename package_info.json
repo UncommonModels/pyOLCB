@@ -1,7 +1,12 @@
 {
     "name":"pyOLCB",
-    "version":"0.1.0",
+    "version":"0.2.0",
     "author":"ngpaladi",
     "url":"https://github.com/UncommonModels/pyOLCB",
-    "dependencies": "python-can"
+    "dependencies": [],
+    "extras": {
+        "can": ["python-can"],
+        "serial": ["pyserial"],
+        "mdns": ["zeroconf"]
+    }
 }

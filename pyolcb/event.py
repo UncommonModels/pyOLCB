@@ -1,8 +1,24 @@
-from pyolcb import message_types
+from enum import Enum
 from .address import Address
 from .message import Message
 from . import message_types
 from . import utilities
+
+
+class EventState(Enum):
+    """The state a producer or consumer reports for an event when identified."""
+    VALID = 0x4
+    INVALID = 0x5
+    UNKNOWN = 0x7
+
+
+# The (consumer, producer) identified MTIs for each state.
+IDENTIFIED_MTI = {
+    EventState.VALID: (0x4C4, 0x544),
+    EventState.INVALID: (0x4C5, 0x545),
+    EventState.UNKNOWN: (0x4C7, 0x547),
+}
+
 
 class Event(Message):
     id = bytes(8)

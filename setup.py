@@ -16,8 +16,9 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url=package_info["url"],
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(exclude=["tests", "tests.*"]),
     install_requires=package_info["dependencies"],
+    extras_require=package_info.get("extras", {}),
     python_requires='>3.10.8',
     classifiers=[
         "Programming Language :: Python :: 3",

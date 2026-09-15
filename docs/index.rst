@@ -14,6 +14,8 @@
     node
     message
     interface
+    gridconnect
+    memory_config
 
 
 =====================================================

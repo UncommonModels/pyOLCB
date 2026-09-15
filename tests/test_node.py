@@ -1,14 +1,19 @@
-import can
+import pytest
 import pyolcb
 import time
+
+can = pytest.importorskip("can", reason="needs python-can")
 
 TEST_ADDRESS = '05.01.01.01.8C.00'
 TEST_OTHER_ADDRESS = '05.01.01.01.8C.01'
 GLOBAL_ADDRESS = '00.00.00.00.00.00'
 
 # For efficiency's sake we initialize the BUS and NODE here so we don't have to re-create every time
-BUS = can.Bus(interface='socketcan', channel='vcan0', bitrate=125000, receive_own_messages=True) # Primary Bus
-BUS2 = can.Bus(interface='socketcan', channel='vcan0', bitrate=125000, receive_own_messages=True) # Secondary Bus for validating responses
+try:
+    BUS = can.Bus(interface='socketcan', channel='vcan0', bitrate=125000, receive_own_messages=True) # Primary Bus
+    BUS2 = can.Bus(interface='socketcan', channel='vcan0', bitrate=125000, receive_own_messages=True) # Secondary Bus for validating responses
+except (OSError, can.CanError) as e:
+    pytest.skip("needs a vcan0 interface (tests/setup_vcan.sh): %s" % e, allow_module_level=True)
 MSGS = [] # List of all messages received
 can.Notifier(BUS2, [MSGS.append])
 NODE = pyolcb.Node(pyolcb.Address(TEST_ADDRESS), pyolcb.Interface(BUS))
@@ -43,9 +48,10 @@ def test_verify_node_id_global():
     """
     NODE.verify_node_id()
     time.sleep(1)
-    assert MSGS[-2].data == bytearray(
-        pyolcb.utilities.process_bytes(6, NODE.address.full))
-    assert MSGS[-2].arbitration_id == pyolcb.message_types.Verify_Node_ID_Number_Global.get_can_header(NODE.address)
+    # An empty payload asks every node; a node ID in it would restrict the
+    # answer to that one node. The node does not answer its own request.
+    assert MSGS[-1].data == bytearray()
+    assert MSGS[-1].arbitration_id == pyolcb.message_types.Verify_Node_ID_Number_Global.get_can_header(NODE.address)
 
 
 def test_verify_node_id_addressed():
