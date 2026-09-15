@@ -31,6 +31,7 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Setup virtual CAN bus
       run: |
+        sudo apt-get update
         sudo apt-get -y install linux-modules-extra-$(uname -r)
         sudo ./tests/setup_vcan.sh
     - name: Lint with flake8
